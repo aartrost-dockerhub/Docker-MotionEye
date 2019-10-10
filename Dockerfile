@@ -20,6 +20,7 @@ RUN apt-get update && \
         autoconf \
         automake \
         build-essential \
+        gettext-tools \
         pkgconf \
         libtool \
         libzip-dev \

@@ -12,6 +12,8 @@ RUN apt-get update && \
         tzdata \
         python-pip \
         python-dev \
+        nano \
+        gifsicle \
         python3 \
         python3-pip \
         curl \
@@ -54,7 +56,7 @@ RUN mkdir -p /etc/motioneye \
     mkdir -p /var/lib/motioneye
 
 # custom stuff for personal use
-RUN pip3 install numpy requests pysocks
+RUN pip3 install numpy requests pysocks pillow
 
 # Configurations, Video & Images
 VOLUME ["/etc/motioneye", "/var/lib/motioneye"]

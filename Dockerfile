@@ -54,7 +54,7 @@ RUN mkdir -p /etc/motioneye \
     mkdir -p /var/lib/motioneye
 
 # custom stuff for personal use
-pip3 install numpy requests
+RUN pip3 install numpy requests pysocks
 
 # Configurations, Video & Images
 VOLUME ["/etc/motioneye", "/var/lib/motioneye"]

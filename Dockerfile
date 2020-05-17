@@ -4,7 +4,8 @@ ENV DEBIAN_FRONTEND noninteractive
 ENV MOTIONEYE_VERSION="0.41"
 
 # enable the universe repository for python 2
-RUN add-apt-repository universe
+RUN apt-get install software-properties-common \
+    && add-apt-repository universe
 
 # Install motion, ffmpeg, v4l-utils and the dependencies from the repositories
 RUN apt-get update && \

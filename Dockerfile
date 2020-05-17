@@ -3,6 +3,9 @@ FROM ubuntu:20.04
 ENV DEBIAN_FRONTEND noninteractive
 ENV MOTIONEYE_VERSION="0.41"
 
+# enable the universe repository for python 2
+RUN add-apt-repository universe
+
 # Install motion, ffmpeg, v4l-utils and the dependencies from the repositories
 RUN apt-get update && \
     apt-get -y -f install \
@@ -10,8 +13,8 @@ RUN apt-get update && \
         ffmpeg \
         v4l-utils \
         tzdata \
-        python-pip \
-        python-dev \
+        python2 \
+        python2-dev \
         nano \
         gifsicle \
         python3 \
@@ -39,6 +42,10 @@ RUN apt-get update && \
         libmicrohttpd-dev && \
      apt-get clean
 
+# install pip2
+RUN curl https://bootstrap.pypa.io/get-pip.py --output get-pip.py \
+    && python2 get-pip.py
+
 # Install latest motion from git
 RUN cd ~ \
     && git clone https://github.com/Motion-Project/motion.git \
@@ -49,7 +56,7 @@ RUN cd ~ \
     && make install
 
 # Install motioneye, which will automatically pull Python dependencies (tornado, jinja2, pillow and pycurl)
-RUN pip install motioneye==$MOTIONEYE_VERSION
+RUN pip2 install motioneye==$MOTIONEYE_VERSION
 
 # Prepare the configuration directory and the media directory
 RUN mkdir -p /etc/motioneye \

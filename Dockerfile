@@ -3,13 +3,13 @@ FROM ubuntu:20.04
 ENV DEBIAN_FRONTEND noninteractive
 ENV MOTIONEYE_VERSION="0.41"
 
-# enable the universe repository for python 2
-RUN apt-get install software-properties-common \
-    && add-apt-repository universe
-
 # Install motion, ffmpeg, v4l-utils and the dependencies from the repositories
-RUN apt-get update && \
-    apt-get -y -f install \
+RUN apt-get update \
+    && apt-get -y -f install \
+        software-properties-common \
+    && add-apt-repository universe \
+    && apt-get update \
+    && apt-get -y -f install \
         wget \
         ffmpeg \
         v4l-utils \
@@ -40,8 +40,8 @@ RUN apt-get update && \
         libswscale-dev \
         libavdevice-dev \
         libwebp-dev \
-        libmicrohttpd-dev && \
-     apt-get clean
+        libmicrohttpd-dev \
+     && apt-get clean
 
 # install pip2
 RUN curl https://bootstrap.pypa.io/get-pip.py --output get-pip.py \

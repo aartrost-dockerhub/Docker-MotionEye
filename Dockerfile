@@ -1,7 +1,7 @@
 FROM ubuntu:20.04
 
 ENV DEBIAN_FRONTEND noninteractive
-ENV MOTIONEYE_VERSION="0.41"
+ENV MOTIONEYE_VERSION="0.42"
 
 # Install motion, ffmpeg, v4l-utils and the dependencies from the repositories
 RUN apt-get update \

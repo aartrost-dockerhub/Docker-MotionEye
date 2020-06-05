@@ -56,7 +56,7 @@ RUN cd ~ \
     && make \
     && make install
 
-# Install latest mp4fpsmod ( I use this to fix stutter issues on passthrough videos with variable framerate)
+# Install latest mp4fpsmod (can be used to fix stutter issues on passthrough videos with variable framerate)
 RUN cd ~ \
     && git clone https://github.com/nu774/mp4fpsmod \
     && cd mp4fpsmod \

@@ -56,6 +56,16 @@ RUN cd ~ \
     && make \
     && make install
 
+# Install latest mp4fpsmod ( I use this to fix stutter issues on passthrough videos with variable framerate)
+RUN cd ~ \
+    && git clone https://github.com/nu774/mp4fpsmod \
+    && cd mp4fpsmod \
+    && ./bootstrap.sh \
+    && ./configure \
+    && make \
+    && strip mp4fpsmod \
+    && make install
+
 # Install motioneye, which will automatically pull Python dependencies (tornado, jinja2, pillow and pycurl)
 RUN pip2 install motioneye==$MOTIONEYE_VERSION
 

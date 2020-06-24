@@ -1,70 +1,37 @@
-FROM ubuntu:19.04
+FROM arm64v8/alpine:3.11
 
-ENV DEBIAN_FRONTEND noninteractive
-ENV MOTIONEYE_VERSION="0.41"
+COPY --from=balenalib/generic-aarch64-alpine /usr/bin/qemu-aarch64-static /usr/bin/qemu-aarch64-static
+COPY --from=balenalib/generic-aarch64-alpine /usr/bin/resin-xbuild /usr/bin/resin-xbuild
+COPY --from=balenalib/generic-aarch64-alpine /usr/bin/cross-build-start /usr/bin/cross-build-start
+COPY --from=balenalib/generic-aarch64-alpine /usr/bin/cross-build-end /usr/bin/cross-build-end
 
-# Install motion, ffmpeg, v4l-utils and the dependencies from the repositories
-RUN apt-get update && \
-    apt-get -y -f install \
-        wget \
-        ffmpeg \
-        v4l-utils \
-        tzdata \
-        python-pip \
-        python-dev \
-        nano \
-        gifsicle \
-        python3 \
-        python3-pip \
-        curl \
-        libssl-dev \
-        libcurl4-openssl-dev \
-        libjpeg-dev \
-        git \
-        autoconf \
-        automake \
-        build-essential \
-        gettext \
-        autopoint \
-        pkgconf \
-        libtool \
-        libzip-dev \
-        libjpeg-dev \
-        libavformat-dev \
-        libavcodec-dev \
-        libavutil-dev \
-        libswscale-dev \
-        libavdevice-dev \
-        libwebp-dev \
-        libmicrohttpd-dev && \
-     apt-get clean
+RUN [ "cross-build-start" ]
 
-# Install latest motion from git
-RUN cd ~ \
-    && git clone https://github.com/Motion-Project/motion.git \
-    && cd motion \
-    && autoreconf -fiv \
-    && ./configure \
-    && make \
-    && make install
+ENV UID=1000
+ENV GID=100
 
-# Install motioneye, which will automatically pull Python dependencies (tornado, jinja2, pillow and pycurl)
-RUN pip install motioneye==$MOTIONEYE_VERSION
+# Define software versions.
+ARG MOTIONEYE_VERSION=0.42.1
 
-# Prepare the configuration directory and the media directory
-RUN mkdir -p /etc/motioneye \
-    mkdir -p /var/lib/motioneye
+WORKDIR /tmp
 
-# custom stuff for personal use
-RUN pip3 install numpy requests pysocks pillow
+RUN echo "http://dl-cdn.alpinelinux.org/alpine/edge/testing" >> /etc/apk/repositories \
+&& apk --no-cache add py2-pillow motion python2 curl openssl tzdata py-setuptools bash \
+&& apk --no-cache add --virtual=builddeps build-base curl-dev jpeg-dev openssl-dev python2-dev zlib-dev wget py2-pip \
+&& wget https://github.com/ccrisan/motioneye/archive/${MOTIONEYE_VERSION}.tar.gz \
+&& tar -xvf ${MOTIONEYE_VERSION}.tar.gz \
+&& cd motioneye-${MOTIONEYE_VERSION} && pip install --no-cache-dir . \
+&& apk del builddeps \
+&& rm -rf /var/cache/apk/* /tmp/* /tmp/.[!.]*
 
-# Configurations, Video & Images
-VOLUME ["/etc/motioneye", "/var/lib/motioneye"]
+COPY startapp.sh /startapp.sh
+RUN  chmod +x /startapp.sh
 
-# Run migration helper to convert config from motion 3.x to 4.x, set default conf and start the MotionEye Server
-CMD for file in `find /etc/motioneye -type f \( -name "motion.conf" -o -name "thread-*.conf" \)`; do /usr/local/lib/python2.7/dist-packages/motioneye/scripts/migrateconf.sh $file; done; \
-    test -e /etc/motioneye/motioneye.conf || \
-    cp /usr/local/share/motioneye/extra/motioneye.conf.sample /etc/motioneye/motioneye.conf; \
-    /usr/local/bin/meyectl startserver -c /etc/motioneye/motioneye.conf
+HEALTHCHECK --interval=1m --timeout=10s \
+  CMD nc -z localhost 8765 || exit 1
+
+CMD /startapp.sh /usr/bin/meyectl startserver -c /etc/motioneye/motioneye.conf
 
 EXPOSE 8765
+
+RUN [ "cross-build-end" ]

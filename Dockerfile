@@ -48,9 +48,9 @@ RUN apt-get update && \
 
 # Install latest motion from release package
 RUN cd ~ \
-    && wget https://github.com/Motion-Project/motion/releases/download/release-$MOTIONEYE_VERSION/buster_motion_$MOTIONEYE_VERSION-1_amd64.deb \
-    && gdebi buster_motion_$MOTIONEYE_VERSION-1_amd64.deb \
-    && rm ~/buster_motion_$MOTIONEYE_VERSION-1_amd64.deb
+    && wget https://github.com/Motion-Project/motion/releases/download/release-$MOTION_VERSION/buster_motion_$MOTION_VERSION-1_amd64.deb \
+    && gdebi buster_motion_$MOTION_VERSION-1_amd64.deb \
+    && rm ~/buster_motion_$MOTION_VERSION-1_amd64.deb
 
 # install motioneye & custom stuff for personal use
 RUN pip install motioneye==$MOTIONEYE_VERSION numpy requests pysocks pillow

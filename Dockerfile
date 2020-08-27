@@ -81,7 +81,7 @@ CMD for file in `find /etc/motioneye -type f \( -name "motion.conf" -o -name "th
     test -e /etc/motioneye/motioneye.conf || \
     cp /usr/local/share/motioneye/extra/motioneye.conf.sample /etc/motioneye/motioneye.conf; \
     # We need to chown at startup time since volumes are mounted as root. This is fugly.
-    chown motion:motion /var/run /var/log /etc/motioneye /var/lib/motioneye /usr/share/motioneye/extra ; \
+    chown motion:motion /var/run /var/log /etc/motioneye /var/lib/motioneye /usr/local/share/motioneye/extra ; \
     su -g motion motion -s /bin/bash -c "/usr/local/bin/meyectl startserver -c /etc/motioneye/motioneye.conf"
 
 EXPOSE 8765

@@ -77,9 +77,8 @@ VOLUME /etc/motioneye
 # Video & images
 VOLUME /var/lib/motioneye
 
-# Run migration helper to convert config from motion 3.x to 4.x, set default conf and start the MotionEye Server
-CMD for file in `find /etc/motioneye -type f \( -name "motion.conf" -o -name "thread-*.conf" \)`; do /usr/local/lib/python2.7/dist-packages/motioneye/scripts/migrateconf.sh $file; done; \
-    test -e /etc/motioneye/motioneye.conf || \
+# set default conf and start the MotionEye Server
+CMD test -e /etc/motioneye/motioneye.conf || \
     cp /usr/local/share/motioneye/extra/motioneye.conf.sample /etc/motioneye/motioneye.conf; \
     # We need to chown at startup time since volumes are mounted as root. This is fugly.
     chown motion:motion /var/run /var/log /etc/motioneye /var/lib/motioneye /usr/local/share/motioneye/extra ; \

@@ -14,10 +14,6 @@ LABEL org.label-schema.build-date=$BUILD_DATE \
     org.label-schema.vcs-type="Git" \
     org.label-schema.vcs-url="https://github.com/ccrisan/motioneye.git"
 
-# By default, run as root.
-ARG RUN_UID=0
-ARG RUN_GID=0
-
 RUN apt-get update && \
     DEBIAN_FRONTEND="noninteractive" apt-get -t stable --yes --option Dpkg::Options::="--force-confnew" --no-install-recommends install \
       curl \
@@ -68,15 +64,8 @@ RUN cd ~ \
     && make install \
     && rm -r ~/motion
 
-    # Change uid/gid of user/group motion to match our desired IDs.  This will
-    # make it easier to use execute motion as our desired user later.
-RUN sed -i -e "s/^\(motion:[^:]*\):[0-9]*:[0-9]*:\(.*\)/\1:${RUN_UID}:${RUN_GID}:\2/" /etc/passwd && \
-    sed -i -e "s/^\(motion:[^:]*\):[0-9]*:\(.*\)/\1:${RUN_GID}:\2/" /etc/group && \
-    # install motioneye
-    pip install motioneye==$MOTIONEYE_VERSION
-
-# custom stuff for personal use
-RUN pip install numpy requests pysocks pillow
+# install motioneye & custom stuff for personal use
+RUN pip install motioneye==$MOTIONEYE_VERSION numpy requests pysocks pillow
 
 # Install latest mp4fpsmod (can be used to fix stutter issues on passthrough videos with variable framerate)
 RUN cd ~ \
@@ -103,8 +92,6 @@ VOLUME /var/lib/motioneye
 # set default conf and start the MotionEye Server
 CMD test -e /etc/motioneye/motioneye.conf || \
     cp /usr/local/share/motioneye/extra/motioneye.conf.sample /etc/motioneye/motioneye.conf; \
-    # We need to chown at startup time since volumes are mounted as root. This is fugly.
-    chown motion:motion /var/run /var/log /etc/motioneye /var/lib/motioneye /usr/local/share/motioneye/extra ; \
-    su -g motion motion -s /bin/bash -c "/usr/local/bin/meyectl startserver -c /etc/motioneye/motioneye.conf"
+    /usr/local/bin/meyectl startserver -c /etc/motioneye/motioneye.conf
 
 EXPOSE 8765

@@ -18,11 +18,7 @@ ARG RUN_GID=0
 
 COPY . /tmp/motioneye
 
-# ignore snapshot.debian.org release file expiry date
-RUN echo "Acquire::Check-Valid-Until false;" | tee -a /etc/apt/apt.conf.d/10-nocheckvalid
-
-RUN echo "deb http://snapshot.debian.org/archive/debian/20200630T024205Z sid main contrib non-free" >>/etc/apt/sources.list && \
-    apt-get update && \
+RUN apt-get update && \
     DEBIAN_FRONTEND="noninteractive" apt-get -t stable --yes --option Dpkg::Options::="--force-confnew" --no-install-recommends install \
       curl \
       ffmpeg \
@@ -40,18 +36,23 @@ RUN echo "deb http://snapshot.debian.org/archive/debian/20200630T024205Z sid mai
       python-tz \
       python-wheel \
       v4l-utils \
+      # custom packages
       tzdata \
+      git \
       automake \
       autoconf \
+      libtool \
+      build-essential \
+      gettext \
       gifsicle && \
-    DEBIAN_FRONTEND="noninteractive" apt-get -t sid --yes --option Dpkg::Options::="--force-confnew" --no-install-recommends install \
+    DEBIAN_FRONTEND="noninteractive" apt-get --yes --option Dpkg::Options::="--force-confnew" --no-install-recommends install \
       motion \
-      libmysqlclient20 && \
+      default-libmysqlclient-dev && \
     # Change uid/gid of user/group motion to match our desired IDs.  This will
     # make it easier to use execute motion as our desired user later.
     sed -i -e "s/^\(motion:[^:]*\):[0-9]*:[0-9]*:\(.*\)/\1:${RUN_UID}:${RUN_GID}:\2/" /etc/passwd && \
     sed -i -e "s/^\(motion:[^:]*\):[0-9]*:\(.*\)/\1:${RUN_GID}:\2/" /etc/group && \
-    pip install /tmp/motioneye
+    pip install motioneye
 
 # custom stuff for personal use
 RUN pip install numpy requests pysocks pillow
@@ -68,7 +69,7 @@ RUN cd ~ \
 
 # Cleanup
 RUN rm -rf /tmp/motioneye && \
-    apt-get purge --yes python-setuptools python-wheel automake autoconf && \
+    apt-get purge --yes python-setuptools python-wheel git automake autoconf libtool gettext build-essential && \
     apt-get autoremove --yes && \
     apt-get --yes clean && rm -rf /var/lib/apt/lists/* && rm -f /var/cache/apt/*.bin
 

@@ -35,6 +35,7 @@ RUN apt-get update && \
       python-wheel \
       v4l-utils \
       # custom packages
+      nano \
       tzdata \
       git \
       automake \

@@ -16,8 +16,6 @@ LABEL org.label-schema.build-date=$BUILD_DATE \
 ARG RUN_UID=0
 ARG RUN_GID=0
 
-COPY . /tmp/motioneye
-
 RUN apt-get update && \
     DEBIAN_FRONTEND="noninteractive" apt-get -t stable --yes --option Dpkg::Options::="--force-confnew" --no-install-recommends install \
       curl \
@@ -68,12 +66,9 @@ RUN cd ~ \
     && make install
 
 # Cleanup
-RUN rm -rf /tmp/motioneye && \
-    apt-get purge --yes python-setuptools python-wheel git automake autoconf libtool gettext build-essential && \
+RUN apt-get purge --yes python-setuptools python-wheel git automake autoconf libtool gettext build-essential && \
     apt-get autoremove --yes && \
     apt-get --yes clean && rm -rf /var/lib/apt/lists/* && rm -f /var/cache/apt/*.bin
-
-ADD extra/motioneye.conf.sample /usr/share/motioneye/extra/
 
 # R/W needed for motioneye to update configurations
 VOLUME /etc/motioneye
@@ -81,8 +76,10 @@ VOLUME /etc/motioneye
 # Video & images
 VOLUME /var/lib/motioneye
 
-CMD test -e /etc/motioneye/motioneye.conf || \
-    cp /usr/share/motioneye/extra/motioneye.conf.sample /etc/motioneye/motioneye.conf ; \
+# Run migration helper to convert config from motion 3.x to 4.x, set default conf and start the MotionEye Server
+CMD for file in `find /etc/motioneye -type f \( -name "motion.conf" -o -name "thread-*.conf" \)`; do /usr/local/lib/python2.7/dist-packages/motioneye/scripts/migrateconf.sh $file; done; \
+    test -e /etc/motioneye/motioneye.conf || \
+    cp /usr/local/share/motioneye/extra/motioneye.conf.sample /etc/motioneye/motioneye.conf; \
     # We need to chown at startup time since volumes are mounted as root. This is fugly.
     chown motion:motion /var/run /var/log /etc/motioneye /var/lib/motioneye /usr/share/motioneye/extra ; \
     su -g motion motion -s /bin/bash -c "/usr/local/bin/meyectl startserver -c /etc/motioneye/motioneye.conf"

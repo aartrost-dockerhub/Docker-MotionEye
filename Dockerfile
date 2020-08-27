@@ -1,52 +1,57 @@
-FROM ubuntu:19.10
+FROM debian:buster-slim
+LABEL maintainer="Marcus Klein <himself@kleini.org>"
 
-ENV DEBIAN_FRONTEND noninteractive
-ENV MOTIONEYE_VERSION="0.42.1"
+ARG BUILD_DATE
+ARG VCS_REF
+LABEL org.label-schema.build-date=$BUILD_DATE \
+    org.label-schema.docker.dockerfile="extra/Dockerfile" \
+    org.label-schema.license="GPLv3" \
+    org.label-schema.name="motioneye" \
+    org.label-schema.url="https://github.com/ccrisan/motioneye/wiki" \
+    org.label-schema.vcs-ref=$VCS_REF \
+    org.label-schema.vcs-type="Git" \
+    org.label-schema.vcs-url="https://github.com/ccrisan/motioneye.git"
 
-# Install motion, ffmpeg, v4l-utils and the dependencies from the repositories
-RUN apt-get update && \
-    apt-get -y -f install \
-        wget \
-        ffmpeg \
-        v4l-utils \
-        tzdata \
-        python-pip \
-        python-dev \
-        nano \
-        gifsicle \
-        python3 \
-        python3-pip \
-        curl \
-        libssl-dev \
-        libcurl4-openssl-dev \
-        libjpeg-dev \
-        git \
-        autoconf \
-        automake \
-        build-essential \
-        gettext \
-        autopoint \
-        pkgconf \
-        libtool \
-        libzip-dev \
-        libjpeg-dev \
-        libavformat-dev \
-        libavcodec-dev \
-        libavutil-dev \
-        libswscale-dev \
-        libavdevice-dev \
-        libwebp-dev \
-        libmicrohttpd-dev && \
-     apt-get clean
+# By default, run as root.
+ARG RUN_UID=0
+ARG RUN_GID=0
 
-# Install latest motion from git
-RUN cd ~ \
-    && git clone https://github.com/Motion-Project/motion.git \
-    && cd motion \
-    && autoreconf -fiv \
-    && ./configure \
-    && make \
-    && make install
+COPY . /tmp/motioneye
+
+RUN echo "deb http://snapshot.debian.org/archive/debian/20200630T024205Z sid main contrib non-free" >>/etc/apt/sources.list && \
+    apt-get update && \
+    DEBIAN_FRONTEND="noninteractive" apt-get -t stable --yes --option Dpkg::Options::="--force-confnew" --no-install-recommends install \
+      curl \
+      ffmpeg \
+      libmicrohttpd12 \
+      libpq5 \
+      lsb-release \
+      mosquitto-clients \
+      python-jinja2 \
+      python-pil \
+      python-pip \
+      python-pip-whl \
+      python-pycurl \
+      python-setuptools \
+      python-tornado \
+      python-tz \
+      python-wheel \
+      v4l-utils \
+      tzdata \
+      automake \
+      autoconf \
+      gifsicle && \
+    DEBIAN_FRONTEND="noninteractive" apt-get -t sid --yes --option Dpkg::Options::="--force-confnew" --no-install-recommends install \
+      motion \
+      libmysqlclient20 && \
+    # Change uid/gid of user/group motion to match our desired IDs.  This will
+    # make it easier to use execute motion as our desired user later.
+    sed -i -e "s/^\(motion:[^:]*\):[0-9]*:[0-9]*:\(.*\)/\1:${RUN_UID}:${RUN_GID}:\2/" /etc/passwd && \
+    sed -i -e "s/^\(motion:[^:]*\):[0-9]*:\(.*\)/\1:${RUN_GID}:\2/" /etc/group && \
+    pip install /tmp/motioneye
+
+# custom stuff for personal use
+RUN pip install numpy requests pysocks pillow
 
 # Install latest mp4fpsmod (can be used to fix stutter issues on passthrough videos with variable framerate)
 RUN cd ~ \
@@ -58,23 +63,24 @@ RUN cd ~ \
     && strip mp4fpsmod \
     && make install
 
-# Install motioneye, which will automatically pull Python dependencies (tornado, jinja2, pillow and pycurl)
-RUN pip install motioneye==$MOTIONEYE_VERSION
+# Cleanup
+RUN rm -rf /tmp/motioneye && \
+    apt-get purge --yes python-setuptools python-wheel automake autoconf && \
+    apt-get autoremove --yes && \
+    apt-get --yes clean && rm -rf /var/lib/apt/lists/* && rm -f /var/cache/apt/*.bin
 
-# Prepare the configuration directory and the media directory
-RUN mkdir -p /etc/motioneye \
-    mkdir -p /var/lib/motioneye
+ADD extra/motioneye.conf.sample /usr/share/motioneye/extra/
 
-# custom stuff for personal use
-RUN pip3 install numpy requests pysocks pillow
+# R/W needed for motioneye to update configurations
+VOLUME /etc/motioneye
 
-# Configurations, Video & Images
-VOLUME ["/etc/motioneye", "/var/lib/motioneye"]
+# Video & images
+VOLUME /var/lib/motioneye
 
-# Run migration helper to convert config from motion 3.x to 4.x, set default conf and start the MotionEye Server
-CMD for file in `find /etc/motioneye -type f \( -name "motion.conf" -o -name "thread-*.conf" \)`; do /usr/local/lib/python2.7/dist-packages/motioneye/scripts/migrateconf.sh $file; done; \
-    test -e /etc/motioneye/motioneye.conf || \
-    cp /usr/local/share/motioneye/extra/motioneye.conf.sample /etc/motioneye/motioneye.conf; \
-    /usr/local/bin/meyectl startserver -c /etc/motioneye/motioneye.conf
+CMD test -e /etc/motioneye/motioneye.conf || \
+    cp /usr/share/motioneye/extra/motioneye.conf.sample /etc/motioneye/motioneye.conf ; \
+    # We need to chown at startup time since volumes are mounted as root. This is fugly.
+    chown motion:motion /var/run /var/log /etc/motioneye /var/lib/motioneye /usr/share/motioneye/extra ; \
+    su -g motion motion -s /bin/bash -c "/usr/local/bin/meyectl startserver -c /etc/motioneye/motioneye.conf"
 
 EXPOSE 8765

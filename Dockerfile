@@ -18,6 +18,9 @@ ARG RUN_GID=0
 
 COPY . /tmp/motioneye
 
+# ignore snapshot.debian.org release file expiry date
+RUN echo "Acquire::Check-Valid-Until false;" | tee -a /etc/apt/apt.conf.d/10-nocheckvalid
+
 RUN echo "deb http://snapshot.debian.org/archive/debian/20200630T024205Z sid main contrib non-free" >>/etc/apt/sources.list && \
     apt-get update && \
     DEBIAN_FRONTEND="noninteractive" apt-get -t stable --yes --option Dpkg::Options::="--force-confnew" --no-install-recommends install \

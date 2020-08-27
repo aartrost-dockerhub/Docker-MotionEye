@@ -1,6 +1,8 @@
 FROM debian:buster-slim
 LABEL maintainer="Marcus Klein <himself@kleini.org>"
 
+ENV MOTIONEYE_VERSION="0.42.1"
+
 ARG BUILD_DATE
 ARG VCS_REF
 LABEL org.label-schema.build-date=$BUILD_DATE \
@@ -40,18 +42,38 @@ RUN apt-get update && \
       git \
       automake \
       autoconf \
+      autopoint \
       libtool \
+      pkgconf \
       build-essential \
+      libzip-dev \
+      libjpeg62-turbo-dev \
+      libmicrohttpd-dev \
+      default-libmysqlclient-dev \
       gettext \
-      gifsicle && \
-    DEBIAN_FRONTEND="noninteractive" apt-get --yes --option Dpkg::Options::="--force-confnew" --no-install-recommends install \
-      motion \
-      default-libmysqlclient-dev && \
+      gifsicle \
+      libavformat-dev \
+      libavcodec-dev \
+      libavutil-dev \
+      libswscale-dev \
+      libavdevice-dev
+
+# Install latest motion from git
+RUN cd ~ \
+    && git clone https://github.com/Motion-Project/motion.git \
+    && cd motion \
+    && autoreconf -fiv \
+    && ./configure \
+    && make \
+    && make install \
+    && rm -r ~/motion
+
     # Change uid/gid of user/group motion to match our desired IDs.  This will
     # make it easier to use execute motion as our desired user later.
-    sed -i -e "s/^\(motion:[^:]*\):[0-9]*:[0-9]*:\(.*\)/\1:${RUN_UID}:${RUN_GID}:\2/" /etc/passwd && \
+RUN sed -i -e "s/^\(motion:[^:]*\):[0-9]*:[0-9]*:\(.*\)/\1:${RUN_UID}:${RUN_GID}:\2/" /etc/passwd && \
     sed -i -e "s/^\(motion:[^:]*\):[0-9]*:\(.*\)/\1:${RUN_GID}:\2/" /etc/group && \
-    pip install motioneye
+    # install motioneye
+    pip install motioneye==$MOTIONEYE_VERSION
 
 # custom stuff for personal use
 RUN pip install numpy requests pysocks pillow
@@ -64,10 +86,11 @@ RUN cd ~ \
     && ./configure \
     && make \
     && strip mp4fpsmod \
-    && make install
+    && make install \
+    && rm -r ~/mp4fpsmod
 
 # Cleanup
-RUN apt-get purge --yes python-setuptools python-wheel git automake autoconf libtool gettext build-essential && \
+RUN apt-get purge --yes python-setuptools python-wheel git automake autoconf autopoint libtool pkgconf gettext build-essential libzip-dev libjpeg62-turbo-dev libmicrohttpd-dev && \
     apt-get autoremove --yes && \
     apt-get --yes clean && rm -rf /var/lib/apt/lists/* && rm -f /var/cache/apt/*.bin
 

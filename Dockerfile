@@ -2,6 +2,7 @@ FROM debian:buster-slim
 LABEL maintainer="Marcus Klein <himself@kleini.org>"
 
 ENV MOTIONEYE_VERSION="0.42.1"
+ENV MOTION_VERSION="4.3.1"
 
 ARG BUILD_DATE
 ARG VCS_REF
@@ -17,6 +18,7 @@ LABEL org.label-schema.build-date=$BUILD_DATE \
 RUN apt-get update && \
     DEBIAN_FRONTEND="noninteractive" apt-get -t stable --yes --option Dpkg::Options::="--force-confnew" --no-install-recommends install \
       curl \
+      wget \
       ffmpeg \
       libmicrohttpd12 \
       libpq5 \
@@ -38,31 +40,17 @@ RUN apt-get update && \
       git \
       automake \
       autoconf \
-      autopoint \
       libtool \
-      pkgconf \
       build-essential \
-      libzip-dev \
-      libjpeg62-turbo-dev \
-      libmicrohttpd-dev \
-      default-libmysqlclient-dev \
       gettext \
-      gifsicle \
-      libavformat-dev \
-      libavcodec-dev \
-      libavutil-dev \
-      libswscale-dev \
-      libavdevice-dev
+      gdebi-core \
+      gifsicle
 
-# Install latest motion from git
+# Install latest motion from release package
 RUN cd ~ \
-    && git clone https://github.com/Motion-Project/motion.git \
-    && cd motion \
-    && autoreconf -fiv \
-    && ./configure \
-    && make \
-    && make install \
-    && rm -r ~/motion
+    && wget https://github.com/Motion-Project/motion/releases/download/release-$MOTIONEYE_VERSION/buster_motion_$MOTIONEYE_VERSION-1_amd64.deb \
+    && gdebi buster_motion_$MOTIONEYE_VERSION-1_amd64.deb \
+    && rm ~/buster_motion_$MOTIONEYE_VERSION-1_amd64.deb
 
 # install motioneye & custom stuff for personal use
 RUN pip install motioneye==$MOTIONEYE_VERSION numpy requests pysocks pillow
@@ -79,7 +67,7 @@ RUN cd ~ \
     && rm -r ~/mp4fpsmod
 
 # Cleanup
-RUN apt-get purge --yes python-setuptools python-wheel git automake autoconf autopoint libtool pkgconf gettext build-essential libzip-dev libjpeg62-turbo-dev libmicrohttpd-dev && \
+RUN apt-get purge --yes python-setuptools python-wheel git automake autoconf libtool gettext build-essential gdebi-core && \
     apt-get autoremove --yes && \
     apt-get --yes clean && rm -rf /var/lib/apt/lists/* && rm -f /var/cache/apt/*.bin
 

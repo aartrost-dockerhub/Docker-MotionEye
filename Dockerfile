@@ -17,6 +17,7 @@ LABEL org.label-schema.build-date=$BUILD_DATE \
 RUN apt-get update && \
     DEBIAN_FRONTEND="noninteractive" apt-get -t stable --yes --option Dpkg::Options::="--force-confnew" --no-install-recommends install \
       curl \
+      wget \
       ffmpeg \
       libmicrohttpd12 \
       libpq5 \

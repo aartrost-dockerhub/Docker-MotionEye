@@ -17,7 +17,6 @@ LABEL org.label-schema.build-date=$BUILD_DATE \
 RUN apt-get update && \
     DEBIAN_FRONTEND="noninteractive" apt-get -t stable --yes --option Dpkg::Options::="--force-confnew" --no-install-recommends install \
       curl \
-      wget \
       ffmpeg \
       libmicrohttpd12 \
       libpq5 \
@@ -34,7 +33,9 @@ RUN apt-get update && \
       python-wheel \
       v4l-utils \
       # custom packages
+      wget \
       nano \
+      python3-pip \
       tzdata \
       git \
       automake \
@@ -66,7 +67,8 @@ RUN cd ~ \
     && rm -r ~/motion
 
 # install motioneye & custom stuff for personal use
-RUN pip install motioneye==$MOTIONEYE_VERSION numpy requests pysocks pillow
+RUN pip install motioneye==$MOTIONEYE_VERSION 
+RUN pip3 install numpy requests pysocks pillow
 
 # Install latest mp4fpsmod (can be used to fix stutter issues on passthrough videos with variable framerate)
 RUN cd ~ \
@@ -80,7 +82,7 @@ RUN cd ~ \
     && rm -r ~/mp4fpsmod
 
 # Cleanup
-RUN apt-get purge --yes python-setuptools python-wheel git automake autoconf autopoint libtool pkgconf gettext build-essential libzip-dev libjpeg62-turbo-dev libmicrohttpd-dev && \
+RUN apt-get purge --yes python-setuptools python-wheel python3-pip git automake autoconf autopoint libtool pkgconf gettext build-essential libzip-dev libjpeg62-turbo-dev libmicrohttpd-dev && \
     apt-get autoremove --yes && \
     apt-get --yes clean && rm -rf /var/lib/apt/lists/* && rm -f /var/cache/apt/*.bin
 

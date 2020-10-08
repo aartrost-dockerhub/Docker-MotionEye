@@ -14,8 +14,7 @@ LABEL org.label-schema.build-date=$BUILD_DATE \
     org.label-schema.vcs-type="Git" \
     org.label-schema.vcs-url="https://github.com/ccrisan/motioneye.git"
 
-RUN echo "deb http://http.us.debian.org/debian sid main contrib non-free" >>/etc/apt/sources.list && \
-    apt-get update && \
+RUN apt-get update && \
     DEBIAN_FRONTEND="noninteractive" apt-get -t stable --yes --option Dpkg::Options::="--force-confnew" --no-install-recommends install \
       curl \
       libmicrohttpd12 \
@@ -55,6 +54,8 @@ RUN echo "deb http://http.us.debian.org/debian sid main contrib non-free" >>/etc
       libavutil-dev \
       libswscale-dev \
       libavdevice-dev && \
+    echo "deb http://http.us.debian.org/debian sid main contrib non-free" >>/etc/apt/sources.list && \
+    apt-get update && \
     # Install latest ffmpeg
     DEBIAN_FRONTEND="noninteractive" apt-get -t sid --yes --option Dpkg::Options::="--force-confnew" --no-install-recommends install \
       ffmpeg && \

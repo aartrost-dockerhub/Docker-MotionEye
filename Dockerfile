@@ -14,10 +14,10 @@ LABEL org.label-schema.build-date=$BUILD_DATE \
     org.label-schema.vcs-type="Git" \
     org.label-schema.vcs-url="https://github.com/ccrisan/motioneye.git"
 
-RUN echo "deb http://http.us.debian.org/debian sid main contrib non-free" >>/etc/apt/sources.list && \
-    apt-get update && \
+RUN apt-get update && \
     DEBIAN_FRONTEND="noninteractive" apt-get -t stable --yes --option Dpkg::Options::="--force-confnew" --no-install-recommends install \
       curl \
+      ffmpeg \
       libmicrohttpd12 \
       libpq5 \
       lsb-release \
@@ -38,7 +38,6 @@ RUN echo "deb http://http.us.debian.org/debian sid main contrib non-free" >>/etc
       python3-pip \
       tzdata \
       git \
-      gcc-8-base \
       automake \
       autoconf \
       autopoint \
@@ -56,10 +55,9 @@ RUN echo "deb http://http.us.debian.org/debian sid main contrib non-free" >>/etc
       libavutil-dev \
       libswscale-dev \
       libavdevice-dev && \
-    # Install latest ffmpeg
-    DEBIAN_FRONTEND="noninteractive" apt-get -t sid --yes --option Dpkg::Options::="--force-confnew" --no-install-recommends install \
-      ffmpeg && \
     # Install VAAPI drivers for hardware en/decoding
+    echo "deb http://http.us.debian.org/debian buster main contrib non-free" >>/etc/apt/sources.list && \
+    apt-get update && \
     DEBIAN_FRONTEND="noninteractive" apt-get --yes --option Dpkg::Options::="--force-confnew" --no-install-recommends install \
       intel-media-va-driver-non-free \
       i965-va-driver-shaders

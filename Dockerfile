@@ -46,6 +46,8 @@ RUN apt-get update && \
       build-essential \
       libzip-dev \
       libjpeg62-turbo-dev \
+      libjpeg-turbo8 \
+      libjpeg-turbo8-dev \
       libmicrohttpd-dev \
       default-libmysqlclient-dev \
       gettext \

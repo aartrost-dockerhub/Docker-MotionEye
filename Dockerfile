@@ -35,6 +35,7 @@ RUN apt-get update && \
       # custom packages
       wget \
       nano \
+      vainfo \
       python3-pip \
       tzdata \
       git \

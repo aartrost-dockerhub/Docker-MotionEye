@@ -76,6 +76,17 @@ RUN cd ~ \
 RUN pip install motioneye==$MOTIONEYE_VERSION 
 RUN pip3 install numpy requests pysocks pillow
 
+# Install latest mp4fpsmod (can be used to fix stutter issues on passthrough videos with variable framerate)
+RUN cd ~ \
+    && git clone https://github.com/nu774/mp4fpsmod \
+    && cd mp4fpsmod \
+    && ./bootstrap.sh \
+    && ./configure \
+    && make \
+    && strip mp4fpsmod \
+    && make install \
+    && rm -r ~/mp4fpsmod
+
 # Cleanup
 RUN apt-get purge --yes python-setuptools python-wheel python3-pip git automake autoconf autopoint libtool pkgconf gettext build-essential libzip-dev libjpeg62-turbo-dev libmicrohttpd-dev && \
     apt-get autoremove --yes && \
